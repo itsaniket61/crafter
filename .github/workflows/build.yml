@@ -23,7 +23,7 @@ jobs:
     - name: Build Docker image
       run: |
         docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/crafter:latest .
-        docker tag ${{ secrets.DOCKERHUB_USERNAME }}/crafter:latest yourdockerusername/yourrepositoryname:$(date +%s)
+        docker tag ${{ secrets.DOCKERHUB_USERNAME }}/crafter:latest crafter/yourrepositoryname:$(date +%s)
     
     - name: Push Docker image
       run: |
