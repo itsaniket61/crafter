@@ -23,9 +23,9 @@ jobs:
     - name: Build Docker image
       run: |
         docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/crafter:latest .
-        docker tag ${{ secrets.DOCKERHUB_USERNAME }}/crafter:latest ${{ secrets.DOCKERHUB_USERNAME }}/crafter:$(date +%s)
+        docker tag ${{ secrets.DOCKERHUB_USERNAME }}/crafter:latest ${{ secrets.DOCKERHUB_USERNAME }}/crafter:$(date +%Y-%m-%d)
     
     - name: Push Docker image
       run: |
         docker push ${{ secrets.DOCKERHUB_USERNAME }}/crafter:latest
-        docker push ${{ secrets.DOCKERHUB_USERNAME }}/crafter:$(date +%s)
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/crafter:$(date +%Y-%m-%d)
