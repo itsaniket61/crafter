@@ -3,5 +3,5 @@ services:
     image: itsaniket61/crafter:latest
     container_name: crafter
     expose:
-      - "8080"
+      - "${PORT}:${PORT}"
 
