@@ -46,9 +46,7 @@ const buildPDF = async (zipFilePath, options = {}) => {
     : {};
 
     const images = convertImagesToBase64(tempDir);
-    for(const key in images) {
-        console.log(images[key]);
-    }
+
   // Compile EJS content with provided data
   const htmlContent = ejs.render(ejsContent, { $, images });
 
