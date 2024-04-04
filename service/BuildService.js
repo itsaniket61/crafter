@@ -46,9 +46,7 @@ const buildPDF = async (zipFilePath, options = {}) => {
     : {};
 
     const images = convertImagesToBase64(tempDir);
-    for(const key in images) {
-        console.log(images[key]);
-    }
+
   // Compile EJS content with provided data
   const htmlContent = ejs.render(ejsContent, { $, images });
 
@@ -87,7 +85,7 @@ const generatePDF = async (htmlContent) => {
     fs.mkdirSync(outputPdfsDir, { recursive: true });
   }
   const opp = outputPdfsDir + Date.now().toString() + '.pdf';
-  await page.pdf({ path: opp, format: 'A4'});
+  await page.pdf({ path: opp, format: 'A4', timeout: 0});
   await page.waitForSelector('img');
   // Close the browser
   await browser.close();
