@@ -76,7 +76,7 @@ const generatePDF = async (htmlContent) => {
     args: ['--no-sandbox'],
   });
   const page = await browser.newPage();
-  page.waitForSelector();
+  await page.waitForSelector('html');
   // Set the content and render the PDF
   await page.setContent(htmlContent);
 
@@ -86,7 +86,6 @@ const generatePDF = async (htmlContent) => {
   }
   const opp = outputPdfsDir + Date.now().toString() + '.pdf';
   await page.pdf({ path: opp, format: 'A4', timeout: 0});
-  await page.waitForSelector('img');
   // Close the browser
   await browser.close();
 
