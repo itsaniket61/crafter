@@ -130,6 +130,54 @@ const convertImagesToBase64 = (dirPath) => {
   return images;
 }
 
-const buildService = { buildPDF };
+const parseCraftx = async (zipFilePath) => {
+  const tempDir = path.dirname(zipFilePath);
+  fs.mkdirSync(tempDir, { recursive: true });
+
+  // Extract files from the zip
+  await new Promise((resolve, reject) => {
+    fs.createReadStream(zipFilePath)
+      .pipe(unzipper.Extract({ path: tempDir }))
+      .on('close', resolve)
+      .on('error', reject);
+  });
+
+  // Read the contents of the extracted files
+  const ejsFilePath = `${tempDir}/index.ejs`;
+  const cssFilePath = `${tempDir}/style.css`;
+  const dataFilePath = `${tempDir}/data.json`;
+
+  if (
+    !(
+      fs.existsSync(ejsFilePath) &&
+      fs.existsSync(cssFilePath) &&
+      fs.existsSync(dataFilePath)
+    )
+  ) {
+    throw new Error('Could not find the required files in the craftx file');
+  }
+
+  // Read the EJS file content
+  const ejsContent = fs.readFileSync(ejsFilePath, 'utf8');
+
+  // Read the CSS file content
+  let cssContent = '';
+  if (fs.existsSync(cssFilePath)) {
+    cssContent = fs.readFileSync(cssFilePath, 'utf8');
+  }
+
+  // Read the data JSON file content
+  const data = fs.existsSync(dataFilePath)
+    ? JSON.parse(fs.readFileSync(dataFilePath, 'utf8'))
+    : {};
+
+  return { ejsContent, cssContent, data };
+};
+
+const packCraftx = ()=>{
+
+}
+
+const buildService = { buildPDF, parseCraftx };
 
 export default buildService;
