@@ -45,25 +45,44 @@ const buildPDF = async (zipFilePath, options = {}) => {
     ? JSON.parse(fs.readFileSync(dataFilePath, 'utf8'))
     : {};
 
-    const images = convertImagesToBase64(tempDir);
+  const images = convertImagesToBase64(tempDir);
 
   // Compile EJS content with provided data
   const htmlContent = ejs.render(ejsContent, { $, images });
 
   // Append CSS content to HTML content
   const fullHtmlContent = `
-        <html>
-            <head>
-                <style>
-                    ${cssContent}
-                </style>
-            </head>
-            <body>
-                ${htmlContent}
-            </body>
-        </html>
-    `;
-//   console.log(fullHtmlContent);
+    <html>
+      <head>
+        ${process.env.ADDITIONAL_HTML_HEADER || ''}
+        <style>
+          ${cssContent}
+          ${!options.disableWatermark && `body {
+            position: relative;
+            z-index: 1;
+          }
+          .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            opacity: 0.1;
+            z-index: -1;
+            pointer-events: none;
+            width: 100%;
+            height: 100%;
+            background: url('${process.env.WATERMARK}') no-repeat center center;
+            background-size: contain;
+          }`}
+        </style>
+      </head>
+      <body>
+        <div class="watermark"></div>
+        ${htmlContent}
+      </body>
+    </html>
+  `;
+
   // Generate PDF using puppeteer
   const pdfBuffer = await generatePDF(fullHtmlContent);
 
@@ -76,25 +95,14 @@ const generatePDF = async (htmlContent) => {
     args: ['--no-sandbox'],
   });
   const page = await browser.newPage();
-  await page.waitForSelector('html');
-  // Set the content and render the PDF
-  await page.setContent(htmlContent);
+  await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
 
-  const outputPdfsDir = 'crafter-pdf-outputs/';
-  if (!fs.existsSync(outputPdfsDir)) {
-    fs.mkdirSync(outputPdfsDir, { recursive: true });
-  }
-  const opp = outputPdfsDir + Date.now().toString() + '.pdf';
-  await page.pdf({ path: opp, format: 'A4', timeout: 0});
-  // Close the browser
+  const pdfBuffer = await page.pdf({
+    format: 'A4',
+    printBackground: true,
+  });
+
   await browser.close();
-
-  // Read the generated PDF and return it as buffer
-  const pdfBuffer = fs.readFileSync(opp);
-
-  // Clean up - remove generated PDF file
-  fs.unlinkSync(opp);
-
   return pdfBuffer;
 };
 
@@ -102,7 +110,7 @@ const convertImagesToBase64 = (dirPath) => {
   const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
   const images = {};
 
- // Read the files in the directory
+  // Read the files in the directory
   const files = fs.readdirSync(dirPath);
 
   // Iterate through each file
@@ -110,7 +118,10 @@ const convertImagesToBase64 = (dirPath) => {
     const filePath = path.join(dirPath, file);
 
     // Check if it's a file and if it has an image extension
-    if (fs.statSync(filePath).isFile() && imageExtensions.includes(path.extname(file).toLowerCase())) {
+    if (
+      fs.statSync(filePath).isFile() &&
+      imageExtensions.includes(path.extname(file).toLowerCase())
+    ) {
       // Read the file as binary data
       const fileData = fs.readFileSync(filePath);
 
@@ -118,7 +129,9 @@ const convertImagesToBase64 = (dirPath) => {
       const base64Data = fileData.toString('base64');
 
       // Generate data URL
-      const dataURL = `data:image/${path.extname(file).slice(1)};base64,${base64Data}`;
+      const dataURL = `data:image/${path
+        .extname(file)
+        .slice(1)};base64,${base64Data}`;
 
       // Get the file name without extension
       let fileName = path.basename(file, path.extname(file));
@@ -128,7 +141,7 @@ const convertImagesToBase64 = (dirPath) => {
     }
   });
   return images;
-}
+};
 
 const parseCraftx = async (zipFilePath) => {
   const tempDir = path.dirname(zipFilePath);
@@ -173,10 +186,6 @@ const parseCraftx = async (zipFilePath) => {
 
   return { ejsContent, cssContent, data };
 };
-
-const packCraftx = ()=>{
-
-}
 
 const buildService = { buildPDF, parseCraftx };
 
