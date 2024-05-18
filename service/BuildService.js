@@ -4,7 +4,7 @@ import puppeteer from 'puppeteer';
 import ejs from 'ejs';
 import path from 'path';
 
-const buildPDF = async (zipFilePath, options = {}) => {
+const buildPDF = async (zipFilePath, {disableWatermark,pdfOptions}) => {
   const tempDir = path.dirname(zipFilePath);
   fs.mkdirSync(tempDir, { recursive: true });
 
@@ -57,7 +57,7 @@ const buildPDF = async (zipFilePath, options = {}) => {
         ${process.env.ADDITIONAL_HTML_HEADER || ''}
         <style>
           ${cssContent}
-          ${!options.disableWatermark && `body {
+          ${!disableWatermark && `body {
             position: relative;
             z-index: 1;
           }
@@ -84,12 +84,12 @@ const buildPDF = async (zipFilePath, options = {}) => {
   `;
 
   // Generate PDF using puppeteer
-  const pdfBuffer = await generatePDF(fullHtmlContent);
+  const pdfBuffer = await generatePDF(fullHtmlContent,pdfOptions);
 
   return pdfBuffer;
 };
 
-const generatePDF = async (htmlContent) => {
+const generatePDF = async (htmlContent,pdfOptions) => {
   const browser = await puppeteer.launch({
     headless: true,
     args: ['--no-sandbox'],
@@ -97,10 +97,13 @@ const generatePDF = async (htmlContent) => {
   const page = await browser.newPage();
   await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
 
-  const pdfBuffer = await page.pdf({
-    format: 'A4',
-    printBackground: true,
-  });
+  if(!pdfOptions || pdfOptions.format || pdfOptions.printBackground) {
+    if(pdfOptions===undefined || pdfOptions===null) pdfOptions = {};
+    pdfOptions.format = 'A4';
+    pdfOptions.printBackground = true;
+  }
+
+  const pdfBuffer = await page.pdf(pdfOptions);
 
   await browser.close();
   return pdfBuffer;

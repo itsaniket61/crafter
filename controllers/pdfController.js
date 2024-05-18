@@ -2,7 +2,7 @@ import buildService from '@/service/BuildService';
 import fs from 'fs';
 import path from 'path';
 
-const buildPDF = async (file) => {
+const buildPDF = async (file, disableWatermark=false, pdfOptions={}) => {
   if (file.name.split('.').at(-1) !== 'craftx') {
     throw new Error('The provided file is not a craftx file');
   }
@@ -20,7 +20,7 @@ const buildPDF = async (file) => {
     // Write file asynchronously
     await fs.promises.writeFile(tempZipPath, buffer);
 
-    const pdfPath = await buildService.buildPDF(tempZipPath, () => {});
+    const pdfPath = await buildService.buildPDF(tempZipPath,{disableWatermark,pdfOptions}, () => {});
 
     // Remove the temporary file
     fs.unlinkSync(tempZipPath);

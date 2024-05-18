@@ -5,7 +5,10 @@ export const POST = async (request) => {
   try {
     const formData = await request.formData();
     const file = formData.get('craftx');
-    const { response } = await pdfController.buildPDF(file);
+    let disableWatermark = formData.get('disableWatermark');
+    disableWatermark = disableWatermark === 'true'? true : false;
+    const pdfOptions = await JSON.parse(formData.get('pdfOptions'));
+    const { response } = await pdfController.buildPDF(file, disableWatermark, pdfOptions);
     return new NextResponse(response, { status: 200, statusText: 'OK', headers: {
       'Content-Type': 'application/pdf'
     } });
